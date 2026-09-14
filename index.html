@@ -42,6 +42,13 @@
   .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
   .kpi b { display: block; font-size: 20px; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .kpi span { color: var(--muted); font-size: 12px; }
+  /* flex 안의 grid가 최소 폭(150px × 4칸)으로 고정돼 넘치지 않도록 */
+  .latest-kpis { flex: 1 1 300px; min-width: 0; max-width: 640px; }
+  @media (max-width: 600px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpi b { font-size: 18px; }
+    .ball { width: 30px; height: 30px; font-size: 13px; }
+  }
   /* 빈도 막대 */
   .freq { display: grid; grid-template-columns: repeat(45, minmax(0, 1fr)); gap: 3px; align-items: end; height: 220px; padding-top: 18px; }
   .freq .col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; cursor: default; }
@@ -304,7 +311,7 @@ function renderAnalysis() {
         <div class="muted">최신 ${L.no}회 · ${L.date}</div>
         <div class="row" style="margin-top:8px">${L.nums.map((n) => ball(n)).join('')}<span class="plus">+</span>${ball(L.bonus)}</div>
       </div>
-      <div class="kpis" style="flex:1; max-width:640px">
+      <div class="kpis latest-kpis">
         <div class="kpi"><span>1등 당첨금 (1인)</span><b>${won(L.prize)}</b></div>
         <div class="kpi"><span>1등 당첨자</span><b>${L.winners}명</b></div>
         <div class="kpi"><span>번호 합계</span><b>${L.nums.reduce((a, b) => a + b, 0)}</b></div>
