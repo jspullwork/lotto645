@@ -93,6 +93,10 @@
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
   [hidden] { display: none !important; }
   .err { color: var(--hot); }
+  .rules { margin: 0 0 12px; padding-left: 18px; line-height: 1.6; color: var(--muted); font-size: 13px; }
+  .rules b { color: var(--text); }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  details summary { cursor: pointer; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -165,35 +169,24 @@
   <section id="tab-recommend" hidden>
     <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); align-items: start">
       <div class="card">
-        <h2>추천 설정</h2>
-        <fieldset>
-          <legend>추천 방식</legend>
-          <label class="opt"><input type="radio" name="mode" value="balanced" checked> 균형형 — 역대 통계의 일반적인 패턴에 맞춤</label>
-          <label class="opt"><input type="radio" name="mode" value="hot"> 핫넘버 가중 — 자주 나온 번호 우선</label>
-          <label class="opt"><input type="radio" name="mode" value="cold"> 콜드넘버 가중 — 적게/오래 안 나온 번호 우선</label>
-          <label class="opt"><input type="radio" name="mode" value="random"> 완전 무작위</label>
-        </fieldset>
-        <fieldset>
-          <legend>필터 (균형형 외에도 적용)</legend>
-          <label class="opt"><input type="checkbox" id="fSum" checked> 합계 <input type="number" id="sumMin" value="100" min="21" max="255" style="width:64px"> ~ <input type="number" id="sumMax" value="175" min="21" max="255" style="width:64px"></label>
-          <label class="opt"><input type="checkbox" id="fOdd" checked> 홀짝 비율 2:4 ~ 4:2</label>
-          <label class="opt"><input type="checkbox" id="fLow" checked> 저고 비율 2:4 ~ 4:2</label>
-          <label class="opt"><input type="checkbox" id="fConsec" checked> 3연속 이상 번호 제외</label>
-          <label class="opt"><input type="checkbox" id="fDecade" checked> 같은 번호대 4개 이상 제외</label>
-          <label class="opt"><input type="checkbox" id="fPast" checked> 역대 1등 조합과 동일한 조합 제외</label>
-        </fieldset>
-        <fieldset>
-          <legend>번호 고정 / 제외 — 클릭: 고정 → 제외 → 해제</legend>
+        <h2>번호 추천</h2>
+        <div class="row" style="margin-bottom:12px">
+          <label>게임 수 <select id="games"><option>1</option><option>3</option><option selected>5</option><option>10</option></select></label>
+          <button class="btn" id="gen">번호 생성</button>
+        </div>
+        <ul class="rules">
+          <li><b>게임 간 번호 겹침 최소화</b> — 같은 금액으로 5등 이상이 하나라도 맞을 확률을 높입니다.</li>
+          <li><b>많이 고르는 조합 제외</b> — 1~31(생일)만으로 된 조합, 3연속, 등간격(5·10·15…), 용지 한 줄 몰림, 같은 번호대 4개 이상, 역대 1등 조합. 당첨 시 나눠 갖는 인원을 줄입니다.</li>
+        </ul>
+        <details>
+          <summary>번호 고정 / 제외 (선택)</summary>
+          <p class="muted" style="margin:8px 0">클릭: 고정 → 제외 → 해제</p>
           <div class="picker" id="picker"></div>
           <div class="row" style="margin-top:8px">
             <span class="muted" id="pickInfo">고정 0개 · 제외 0개</span>
             <button class="btn ghost" id="pickReset" style="padding:4px 10px">초기화</button>
           </div>
-        </fieldset>
-        <div class="row">
-          <label>게임 수 <select id="games"><option>1</option><option>3</option><option selected>5</option><option>10</option></select></label>
-          <button class="btn" id="gen">번호 생성</button>
-        </div>
+        </details>
       </div>
       <div class="stack">
         <div class="card">
@@ -201,9 +194,9 @@
           <div id="result"><p class="muted">설정을 고른 뒤 ‘번호 생성’을 눌러주세요.</p></div>
         </div>
         <div class="note">
-          ⚠️ 로또 추첨은 매 회 독립적인 무작위 추첨이라 <b>어떤 조합이든 1등 확률은 1/8,145,060로 동일</b>합니다.
-          통계 기반 추천은 당첨 확률을 높이지 않으며, 재미와 참고용입니다.
-          다만 사람들이 많이 고르는 패턴(생일 번호 1~31, 연속·대각선 등)을 피하면 당첨 시 나눠 갖는 인원이 줄어드는 효과는 기대할 수 있습니다.
+          ⚠️ 로또는 매 회 독립적인 무작위 추첨이라 <b>어떤 조합이든 1게임의 1등 확률은 1/8,145,060로 동일</b>합니다.
+          자주 나온 번호·안 나온 번호를 고르는 방식은 확률에 영향이 없어 넣지 않았습니다.
+          이 추천은 <b>여러 게임 중 하나라도 맞을 확률</b>과 <b>당첨 시 받는 금액</b>을 늘리는 데 집중합니다.
         </div>
       </div>
     </div>
@@ -395,72 +388,64 @@ $('#pickReset').addEventListener('click', () => { pickState.fill(0); renderPicke
 
 const pastSet = new Set(DRAWS.map((d) => d.nums.join(',')));
 
-function weightedPick(pool, weights, k) {
-  const chosen = [], p = [...pool], w = pool.map((n) => weights[n]);
-  while (chosen.length < k && p.length) {
-    const total = w.reduce((a, b) => a + b, 0);
-    let r = Math.random() * total, i = 0;
-    while (i < p.length - 1 && (r -= w[i]) > 0) i++;
-    chosen.push(p[i]); p.splice(i, 1); w.splice(i, 1);
-  }
-  return chosen;
+// pool에서 무작위로 k개 뽑기 (부분 셔플)
+function sample(pool, k) {
+  const p = [...pool];
+  for (let i = 0; i < k; i++) { const j = i + Math.floor(Math.random() * (p.length - i)); [p[i], p[j]] = [p[j], p[i]]; }
+  return p.slice(0, k);
 }
 
-function passes(nums, f) {
-  const s = nums.reduce((a, b) => a + b, 0);
-  const odd = nums.filter((n) => n % 2).length, low = nums.filter((n) => n <= 22).length;
-  if (f.sum && (s < f.sumMin || s > f.sumMax)) return false;
-  if (f.odd && (odd < 2 || odd > 4)) return false;
-  if (f.low && (low < 2 || low > 4)) return false;
-  if (f.consec && maxRun(nums) >= 3) return false;
-  if (f.decade) { const c = [0, 0, 0, 0, 0]; for (const n of nums) if (++c[Math.min(4, Math.floor((n - 1) / 10))] >= 4) return false; }
-  if (f.past && pastSet.has(nums.join(','))) return false;
-  return true;
+// 사람들이 많이 고르는 조합인지 검사 (당첨 시 나눠 갖는 인원을 줄이기 위함)
+function unpopular(nums) {
+  if (nums.every((n) => n <= 31)) return false;          // 생일 번호(1~31)만으로 된 조합
+  if (maxRun(nums) >= 3) return false;                   // 3연속 이상
+  const d = nums[1] - nums[0];
+  if (nums.every((n, i) => !i || n - nums[i - 1] === d)) return false; // 등간격 (5, 10, 15 …)
+  const dec = [0, 0, 0, 0, 0], row = Array(7).fill(0), col = Array(7).fill(0);
+  for (const n of nums) {
+    if (++dec[Math.min(4, Math.floor((n - 1) / 10))] >= 4) return false; // 같은 번호대 4개 이상
+    if (++row[Math.floor((n - 1) / 7)] >= 4) return false;               // 용지(7칸) 가로줄 몰림
+    if (++col[(n - 1) % 7] >= 4) return false;                           // 용지 세로줄 몰림
+  }
+  return !pastSet.has(nums.join(','));                   // 역대 1등 조합
 }
 
 function generate() {
-  const mode = document.querySelector('input[name=mode]:checked').value;
   const games = +$('#games').value;
-  const random = mode === 'random';
-  const f = {
-    sum: !random && $('#fSum').checked, sumMin: +$('#sumMin').value, sumMax: +$('#sumMax').value,
-    odd: !random && $('#fOdd').checked, low: !random && $('#fLow').checked, consec: !random && $('#fConsec').checked,
-    decade: !random && $('#fDecade').checked, past: $('#fPast').checked,
-  };
   const fixed = range1(N).filter((n) => pickState[n] === 1);
   const pool = range1(N).filter((n) => pickState[n] === 0);
   if (pool.length + fixed.length < 6) { $('#result').innerHTML = '<p class="err">사용 가능한 번호가 6개보다 적습니다.</p>'; return; }
 
-  // 가중치: 최근 100회 빈도 + 전체 빈도 혼합, 콜드는 미출현 기간 반영
-  const recent = stats(DRAWS.slice(-100), false).freq, all = stats(DRAWS, false);
-  const latestNo = DRAWS.at(-1).no;
-  const weights = Array(N + 1).fill(1);
-  for (const n of range1(N)) {
-    const allRate = all.freq[n] / DRAWS.length, recRate = recent[n] / Math.min(100, DRAWS.length);
-    const score = 0.5 * allRate + 0.5 * recRate; // 평균 ≈ 6/45
-    if (mode === 'hot') weights[n] = Math.pow(score * N / 6, 3);
-    if (mode === 'cold') weights[n] = Math.pow((6 / N) / Math.max(score, 1e-3), 3) * (1 + Math.min(latestNo - all.lastSeen[n], 30) / 15);
+  // 게임마다 후보를 여러 개 뽑아, 앞선 게임과 번호가 가장 덜 겹치는 조합을 고름
+  const used = Array(N + 1).fill(0), out = [], seen = new Set();
+  for (let g = 0; g < games; g++) {
+    let best = null, bestScore = Infinity, found = 0;
+    for (let t = 0; t < 20000 && found < 300; t++) {
+      const nums = [...fixed, ...sample(pool, 6 - fixed.length)].sort((a, b) => a - b);
+      if (seen.has(nums.join(',')) || !unpopular(nums)) continue;
+      found++;
+      const score = nums.reduce((s, n) => s + used[n] * used[n], 0) + Math.random() * 0.5;
+      if (score < bestScore) { best = nums; bestScore = score; }
+    }
+    if (!best) break;
+    seen.add(best.join(',')); out.push(best); best.forEach((n) => used[n]++);
   }
+  if (!out.length) { $('#result').innerHTML = '<p class="err">조건을 만족하는 조합을 찾지 못했습니다. 고정/제외 번호를 줄여 보세요.</p>'; return; }
 
-  const out = [], seen = new Set();
-  let tries = 0;
-  while (out.length < games && tries < 200000) {
-    tries++;
-    const nums = [...fixed, ...weightedPick(pool, weights, 6 - fixed.length)].sort((a, b) => a - b);
-    const key = nums.join(',');
-    if (seen.has(key) || !passes(nums, f)) continue;
-    seen.add(key); out.push(nums);
-  }
-  if (!out.length) { $('#result').innerHTML = '<p class="err">조건을 만족하는 조합을 찾지 못했습니다. 필터나 고정 번호를 완화해 보세요.</p>'; return; }
+  // 이 세트를 역대 매 회차 샀다면 5등 이상이 하나라도 나온 비율
+  const sets = out.map((nums) => new Set(nums));
+  const anyHit = DRAWS.filter((d) => sets.some((s) => rankOf(d, s))).length;
+  const distinct = new Set(out.flat()).size;
+  const freqAll = stats(DRAWS, false).freq;
 
-  const freqAll = all.freq;
   $('#result').innerHTML = out.map((nums, i) => {
-    const s = nums.reduce((a, b) => a + b, 0), odd = nums.filter((n) => n % 2).length, low = nums.filter((n) => n <= 22).length;
-    const best = bestHit(nums);
+    const s = nums.reduce((a, b) => a + b, 0), odd = nums.filter((n) => n % 2).length;
     return `<div class="game"><span class="tag">${String.fromCharCode(65 + i)}</span>
-      <div class="row" style="gap:6px">${nums.map((n) => `<span data-tip="${n}번 역대 ${freqAll[n]}회">${ball(n, pickState[n] === 1 ? '' : '')}</span>`).join('')}</div>
-      <span class="meta">합 ${s} · 홀짝 ${odd}:${6 - odd} · 저고 ${low}:${6 - low} · 역대 최고 ${best}</span></div>`;
-  }).join('') + (out.length < games ? `<p class="muted">조건이 까다로워 ${out.length}게임만 생성했습니다.</p>` : '');
+      <div class="row" style="gap:6px">${nums.map((n) => `<span data-tip="${n}번 역대 ${freqAll[n]}회">${ball(n)}</span>`).join('')}</div>
+      <span class="meta">합 ${s} · 홀짝 ${odd}:${6 - odd} · 역대 최고 ${bestHit(nums)}</span></div>`;
+  }).join('') +
+    (out.length < games ? `<p class="muted">조건이 까다로워 ${out.length}게임만 생성했습니다.</p>` : '') +
+    `<p class="muted" style="margin-bottom:0">서로 다른 번호 ${distinct}개 사용 · 이 세트를 역대 ${DRAWS.length}회차에 매번 샀다면 5등 이상이 하나라도 나온 회차: <b>${anyHit}회 (${pct(anyHit / DRAWS.length)})</b></p>`;
 }
 $('#gen').addEventListener('click', generate);
 
